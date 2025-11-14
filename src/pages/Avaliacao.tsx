@@ -3,18 +3,20 @@ import TelaInicial from "../components/TelaInicial";
 import TelaQuestoes from "../components/TelaQuestoes";
 import TelaAgradecimento from "../components/TelaAgradecimento";
 import { useAvaliacaoContext } from "../providers/AvaliacaoProvider";
+import type { Resposta } from "../@types/Resposta";
+import TelaErro from "../components/TelaErro";
 
 export default function Avaliacao() {
-  const [screen, setScreen] = useState<"inicial" | "questoes" | "agradecimento">(
+  const [screen, setScreen] = useState<"inicial" | "questoes" | "agradecimento" | "error">(
     "inicial"
   );
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [responses, setResponses] = useState<Record<number, number>>({});
+  const [responses, setResponses] = useState<Record<number|string, Resposta>>({});
 
   const { avaliar, concluirAvaliacao, perguntas } = useAvaliacaoContext();
 
   const handleStartEvaluation = async () => {
-    await avaliar(location.search.replace("?dispositivo=", ""));
+    await avaliar(location.search.replace("?dispositivo=", "") || '1');
     setScreen("questoes");
     setCurrentQuestionIndex(0);
     setResponses({});
@@ -22,11 +24,27 @@ export default function Avaliacao() {
 
   const handleRateQuestion = (rating: number) => {
     const questionId = perguntas[currentQuestionIndex].id;
+    const responseQuestion = responses[questionId] ?? { idPergunta: questionId };
     setResponses((prev) => ({
       ...prev,
-      [questionId]: rating,
+      [questionId]: {
+        ...responseQuestion,
+        resposta: rating
+      },
     }));
   };
+
+  const handleFeedbackChange = (feedback: string) => {
+    const questionId = perguntas[currentQuestionIndex].id;
+    const responseQuestion = responses[questionId] ?? { idPergunta: questionId };
+    setResponses((prev) => ({
+      ...prev,
+      [questionId]: {
+        ...responseQuestion,
+        feedbackTextual: feedback
+      }
+    }));
+  }
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < perguntas.length - 1) {
@@ -42,11 +60,20 @@ export default function Avaliacao() {
 
   const handleSubmit = async () => {
     setScreen("agradecimento");
-    setTimeout(() => {
+    //request para concluir avaliação
+    const { data } = await concluirAvaliacao(
+      responses,
+      location.search.replace("?dispositivo=", "") || '1'
+    );
+    if( data.code && data.code !== 200 ) {
+      console.error("Erro ao enviar avaliação:", data);
+      setScreen("error");
+    } else {
+      //volta para a tela inicial ao fim da request
       setScreen("inicial");
-      setCurrentQuestionIndex(0);
-      setResponses({});
-    }, 4000);
+    }
+    setCurrentQuestionIndex(0);
+    setResponses({});
   };
 
   return (
@@ -59,16 +86,22 @@ export default function Avaliacao() {
           question={perguntas[currentQuestionIndex]}
           questionNumber={currentQuestionIndex + 1}
           totalQuestions={perguntas.length}
-          currentRating={perguntas.length ? responses[perguntas[currentQuestionIndex].id] : 1}
+          currentRating={
+              perguntas.length
+                ? responses[perguntas[currentQuestionIndex].id]?.resposta
+                : 1
+            }
           onRate={handleRateQuestion}
           onNext={handleNextQuestion}
           onPrevious={handlePreviousQuestion}
           onSubmit={handleSubmit}
           isLastQuestion={currentQuestionIndex === perguntas.length - 1}
           canGoBack={currentQuestionIndex > 0}
+          onFeedbackChange={handleFeedbackChange}
         />
       )}
       {screen === "agradecimento" && <TelaAgradecimento />}
+      {screen === "error" && <TelaErro />}
     </>
   );
 }

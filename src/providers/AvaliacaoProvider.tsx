@@ -13,7 +13,7 @@ interface AvaliacaoContextType {
   perguntas: Pergunta[];
   loading: boolean;
   avaliar: (dispositivoId: string | number) => Promise<Pergunta[] | void>;
-  concluirAvaliacao: (payload: any) => Promise<AxiosResponse | void>;
+  concluirAvaliacao: (payload: any, dispositivoId: string|number) => Promise<AxiosResponse<{ code: number, message?: string }>>;
 }
 
 const AvaliacaoContext = createContext<AvaliacaoContextType | undefined>(
@@ -55,9 +55,11 @@ export default function AvaliacaoProvider({
     }
   };
 
-  const concluirAvaliacao = async (payload: any) => {
+  const concluirAvaliacao = async (payload: any, dispositivoId: string|number) => {
     try {
-      const res = await api.post(`/?operacao=CONCLUIR`, payload);
+      const res = await api.post(`/?operacao=CONCLUIR&dispositivo=${dispositivoId}`, {
+        avaliacao: payload
+      });
       return res;
     } catch (err) {
       console.error("Erro ao concluir avaliação:", err);
