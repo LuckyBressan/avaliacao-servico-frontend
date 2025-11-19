@@ -6,7 +6,7 @@ import { useAvaliacaoContext } from "../providers/AvaliacaoProvider";
 import type { Resposta } from "../@types/Resposta";
 import TelaErro from "../components/TelaErro";
 
-export default function Avaliacao() {
+export default function AvaliacaoPage() {
   const [screen, setScreen] = useState<"inicial" | "questoes" | "agradecimento" | "error">(
     "inicial"
   );

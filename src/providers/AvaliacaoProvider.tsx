@@ -24,7 +24,7 @@ export function useAvaliacaoContext() {
   const context = useContext(AvaliacaoContext);
   if (!context)
     throw new Error(
-      "useAvaliacaoContext must be used within AvaliacaoProvider"
+      "useAvaliacaoContext deve ser usado dentro de um AvaliacaoProvider"
     );
   return context;
 }

@@ -1,14 +1,9 @@
-import { Outlet } from "react-router-dom";
-import AvaliacaoProvider from "./providers/AvaliacaoProvider";
+import Router from "./routes/Router";
 
 function App() {
   return (
     <>
-      <main className="h-dvh flex items-center justify-center overflow-auto">
-        <AvaliacaoProvider>
-          <Outlet />
-        </AvaliacaoProvider>
-      </main>
+        <Router />
     </>
   );
 }
